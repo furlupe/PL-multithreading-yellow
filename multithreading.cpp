@@ -16,7 +16,11 @@ struct request{
 	int group, type;
 };
 
-queue<request> q;
+auto compare = [](request lhs, request rhs) {
+    return lhs.type < rhs.type;
+};
+
+priority_queue<request, vector<request>, decltype(compare)> q(compare);
 int capacity, n;
 
 atomic_bool threadExit{ false };
@@ -69,7 +73,7 @@ void ProcessRequest(int number, int group) {
             continue;
         }
 
-        request r = q.front();
+        request r = q.top();
         if (r.group != group) {
             //cout << "Device No. " << number << " is free" << endl;
             m.unlock();
