@@ -16,6 +16,10 @@ struct request{
 	int group, type;
 };
 
+auto compare = [](request lhs, request rhs) {
+    return lhs.type < rhs.type;
+};
+
 priority_queue<request, vector<request>, decltype(compare)> q(compare);
 int capacity, n;
 
