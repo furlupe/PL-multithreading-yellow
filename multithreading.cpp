@@ -24,7 +24,6 @@ mutex m;
 
 // обработка ctrl+c
 void handler(int sig) {
-
     threadExit = true;
 }
 
@@ -33,9 +32,7 @@ void GenerateRequest() {
     while (true) {
         m.lock();
 
-        if (threadExit) {
-            break;
-        }
+        if (threadExit) break;
 
         if (q.size() == capacity) {
             m.unlock();
@@ -49,7 +46,9 @@ void GenerateRequest() {
 
         m.unlock();
 
-        this_thread::sleep_for(chrono::milliseconds(1 + rand() % GEN_MAX_SLEEP_TIME));
+        this_thread::sleep_for(
+            chrono::milliseconds(1 + rand() % GEN_MAX_SLEEP_TIME)
+            );
     }
 
     cout << "Terminating generator thread" << endl;
@@ -62,9 +61,7 @@ void ProcessRequest(int number, int group) {
     {
         m.lock();
 
-        if (threadExit) {
-            break;
-        }
+        if (threadExit) break;
 
         if (q.empty()) {
             //cout << "Device No. " << number << " is free" << endl;
@@ -82,7 +79,7 @@ void ProcessRequest(int number, int group) {
         q.pop();
 
         int sleepTime = 250 + rand() % DEVICE_MAX_SLEEP_TIME;
-        
+
         cout << "Device No. " << number << "(group " << group + 1 << ")"
             << " \tis working with request of group " 
             << r.group + 1 << " and type " << r.type + 1
@@ -90,7 +87,9 @@ void ProcessRequest(int number, int group) {
             << " Queue size: " << q.size() << endl;
         
         m.unlock();
-        this_thread::sleep_for(chrono::milliseconds(sleepTime));
+        this_thread::sleep_for(
+            chrono::milliseconds(sleepTime)
+            );
     }
 
     cout << "Terminating device thread number " << number << endl;
@@ -121,14 +120,18 @@ int main() {
     int number = 1;
     for (int i = 0; i < n; i++) {
         for(int j = 0; j < groupSize[i]; j++) {
+
             devices.push_back(
                 thread(ProcessRequest, number++, i)
                 );
+
         }
     }
 
     // создаем генератор
-    devices.push_back(thread (GenerateRequest));
+    devices.push_back(
+        thread (GenerateRequest)
+        );
 
     // дожидаемся конца выполнения потоков
     for(auto &t: devices) t.join();
