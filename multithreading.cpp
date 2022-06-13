@@ -7,10 +7,10 @@
 #include <atomic>
 #include <vector>
 
-using namespace std;
+#define DEVICE_MAX_SLEEP_TIME 1000
+#define GEN_MAX_SLEEP_TIME 500
 
-const GEN_MAX_SLEEP_TIME = 500;
-const DEVICE_MAX_SLEEP_TIME = 1000;
+using namespace std;
 
 struct request{
 	int group, type;
