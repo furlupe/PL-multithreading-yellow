@@ -14,22 +14,20 @@ using namespace std;
 
 struct request{
 	int group, type;
+
+    static bool compare (request lhs, request rhs) {
+        return lhs.type < rhs.type;
+    }
 };
 
-auto compare = [](request lhs, request rhs) {
-    return lhs.type < rhs.type;
-};
-
-priority_queue<request, vector<request>, decltype(compare)> q(compare);
+priority_queue<request, vector<request>, decltype(&request::compare)> q(&request::compare);
 int capacity, n;
 
 atomic_bool threadExit{ false };
 mutex m;
 
 // обработка ctrl+c
-void handler(int sig) {
-    threadExit = true;
-}
+auto handler = [](int sig) { threadExit = true; };
 
 void GenerateRequest() {
     srand(time(0));
@@ -52,7 +50,7 @@ void GenerateRequest() {
 
         this_thread::sleep_for(
             chrono::milliseconds(1 + rand() % GEN_MAX_SLEEP_TIME)
-            );
+        );
     }
 
     cout << "Terminating generator thread" << endl;
@@ -68,14 +66,12 @@ void ProcessRequest(int number, int group) {
         if (threadExit) break;
 
         if (q.empty()) {
-            //cout << "Device No. " << number << " is free" << endl;
             m.unlock();
             continue;
         }
 
         request r = q.top();
         if (r.group != group) {
-            //cout << "Device No. " << number << " is free" << endl;
             m.unlock();
             continue;
         }
@@ -91,9 +87,10 @@ void ProcessRequest(int number, int group) {
             << " Queue size: " << q.size() << endl;
         
         m.unlock();
+
         this_thread::sleep_for(
             chrono::milliseconds(sleepTime)
-            );
+        );
     }
 
     cout << "Terminating device thread number " << number << endl;
@@ -108,26 +105,20 @@ int main() {
     cin >> capacity >> n;
 
     vector<thread> devices;
-    vector<int> groupSize;
-
-    // вводим размеры групп
-    for (int i = 0; i < n; i++) {
-        int size;
-
-        cout << "Enter group No. " << i + 1 << " size: ";
-        cin >> size;
-
-        groupSize.push_back(size);
-    }
 
     // создаем потоки приборов
     int number = 1;
     for (int i = 0; i < n; i++) {
-        for(int j = 0; j < groupSize[i]; j++) {
+
+        int size;
+        cout << "Enter group No. " << i + 1 << " size: " << endl;
+        cin >> size;
+
+        for(int j = 0; j < size; j++) {
 
             devices.push_back(
                 thread(ProcessRequest, number++, i)
-                );
+            );
 
         }
     }
@@ -135,7 +126,7 @@ int main() {
     // создаем генератор
     devices.push_back(
         thread (GenerateRequest)
-        );
+    );
 
     // дожидаемся конца выполнения потоков
     for(auto &t: devices) t.join();
